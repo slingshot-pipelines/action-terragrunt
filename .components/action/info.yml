@@ -1,0 +1,6 @@
+component: actions
+type: github-actions
+
+paths:
+  - exec
+  - install

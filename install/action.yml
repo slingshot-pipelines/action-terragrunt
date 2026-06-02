@@ -1,0 +1,50 @@
+name: Install Terraform & Terragrunt
+description: ""
+
+inputs:
+  TERRAGRUNT_VERSION:
+    description: Terragrunt version
+    required: false
+  TERRAFORM_VERSION:
+    description: Terraform version
+    required: false
+
+runs:
+  using: composite
+  steps:
+    -
+      name: Install Terraform
+      uses: hashicorp/setup-terraform@v4
+      if: ${{ inputs.TERRAFORM_VERSION != '' && env.TG_INSTALL_TF_PATH == '' }}
+      with:
+        terraform_version: ${{ inputs.TERRAFORM_VERSION }}
+        terraform_wrapper: false
+    -
+      name: Identify Terraform path
+      if: ${{ inputs.TERRAFORM_VERSION != '' && env.TG_INSTALL_TF_PATH == '' }}
+      shell: bash
+      id: tf-path
+      run: |
+        echo "::group::Identify Terraform path"
+
+        TERRAFORM_BINARY=$(command -v terraform)
+        echo "path=$TERRAFORM_BINARY" | tee -a "$GITHUB_OUTPUT"
+
+        echo "::endgroup::"
+    -
+      name: Install Terragrunt
+      if: ${{ env.TG_INSTALL_TG_VERSION != '' }}
+      uses: gruntwork-io/terragrunt-action@v3
+      with:
+        tg_version: ${{ inputs.TERRAGRUNT_VERSION }}
+        tf_path: ${{ steps.tf-path.outputs.path }}
+    -
+      name: Persist parameters for future calls
+      shell: bash
+      run: |
+        # Persist inputs for future calls
+        TG_VERSION=$(terragrunt -version | sed -nE 's/.*([0-9]+\.[0-9]+\.[0-9]+).*/\1/p')
+        echo "TG_INSTALL_TG_VERSION=${TG_VERSION}" >> "$GITHUB_ENV"
+
+        TF_PATH=$(command -v terraform)
+        echo "TG_INSTALL_TF_PATH=${TF_PATH}" >> "$GITHUB_ENV"
