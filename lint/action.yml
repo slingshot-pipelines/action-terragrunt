@@ -1,0 +1,81 @@
+name: Lint Terragrunt code
+description: ""
+
+inputs:
+  UNITS_DIR:
+    required: false
+    description: The directory to search within for Terragrunt units
+  STACKS_DIR:
+    required: false
+    description: The directory to search within for Terragrunt stacks
+  APP_CLIENT_ID:
+    description: If specified, git commands will be performed by this app, instead of the caller
+    required: false
+  APP_PRIVATE_KEY:
+    description: If specified, git commands will be performed by this app, instead of the caller
+    required: false
+
+runs:
+  using: composite
+  steps:
+    -
+      name: Fetch app token
+      id: fetch-app-token
+      uses: actions/create-github-app-token@v2
+      if: ${{ inputs.APP_CLIENT_ID != '' && inputs.APP_PRIVATE_KEY != '' }}
+      with:
+        app-id: ${{ inputs.APP_CLIENT_ID }}
+        private-key: ${{ inputs.APP_PRIVATE_KEY }}
+    -
+      name: Format Terragrunt unit files
+      shell: bash
+      working-directory: ${{ inputs.UNITS_DIR }}
+      run: |
+        # Format Terragrunt unit files
+        terragrunt hcl fmt
+    -
+      name: Format Terragrunt stack files
+      shell: bash
+      working-directory: ${{ inputs.STACKS_DIR }}
+      run: |
+        # Format Terragrunt stack files
+        terragrunt hcl fmt
+    -
+      name: Validate Terragrunt stacks
+      shell: bash
+      working-directory: ${{ inputs.STACKS_DIR }}
+      run: |
+        # Validate Terragrunt stacks
+        terragrunt hcl validate --inputs --strict
+    -
+      name: Detect changes
+      id: detect-changes
+      shell: bash
+      run: |
+        # Check for generated changes
+
+        git status -s
+
+        if [ -n "$(git status -s)" ]; then
+          echo "detected=true" | tee -a "$GITHUB_OUTPUT"
+        else
+          echo "detected=false" | tee -a "$GITHUB_OUTPUT"
+        fi
+    -
+      name: Commit changes if detected
+      if: ${{ steps.detect-changes.outputs.detected == 'true' }}
+      uses: planetscale/ghcommit-action@v0.2.20
+      env:
+        GITHUB_TOKEN: ${{ steps.fetch-app-token.outputs.token || github.token }}
+      with:
+        commit_message: "terragrunt fmt"
+        repo: ${{ github.repository }}
+        branch: ${{ github.head_ref || github.ref_name }}
+    -
+      name: Fail if changes
+      shell: bash
+      if: ${{ steps.detect-changes.outputs.detected == 'true' }}
+      run: |
+        # Fail if changes detected
+        
+        exit 1
