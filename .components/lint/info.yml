@@ -1,0 +1,7 @@
+component: lint
+type: github-action
+
+path: lint
+
+action-root: lint
+source-language: composite
