@@ -1,0 +1,8 @@
+component: install
+type: github-action
+
+action-root: install
+source-language: composite
+
+paths:
+  - install

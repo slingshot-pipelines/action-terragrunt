@@ -1,0 +1,8 @@
+component: matrix
+type: github-action
+
+action-root: matrix
+source-language: composite
+
+paths:
+  - matrix
