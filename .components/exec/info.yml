@@ -1,0 +1,7 @@
+component: exec
+type: github-action
+
+path: exec
+
+action-root: exec
+source-language: composite
