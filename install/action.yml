@@ -33,7 +33,7 @@ runs:
         echo "::endgroup::"
     -
       name: Install Terragrunt
-      if: ${{ env.TG_INSTALL_TG_VERSION != '' }}
+      if: ${{ env.TG_INSTALL_TG_VERSION == '' }}
       uses: gruntwork-io/terragrunt-action@v3
       with:
         tg_version: ${{ inputs.TERRAGRUNT_VERSION }}
