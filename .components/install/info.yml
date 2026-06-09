@@ -1,7 +1,7 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/slingshot-pipelines/jsonschemas/main/schemas/component/v1/github-action.schema.json
+
 component: install
 type: github-action
 
 path: install
-
-action-root: install
 source-language: composite
